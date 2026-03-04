@@ -1,0 +1,197 @@
+index.html
+<!DOCTYPE html>
+<html>
+<head>
+<title>QuizWorld Multiplayer</title>
+<style>
+body {
+    font-family: Arial;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    text-align: center;
+    color: white;
+}
+
+#box {
+    background: rgba(0,0,0,0.75);
+    width: 600px;
+    margin: auto;
+    margin-top: 30px;
+    padding: 20px;
+    border-radius: 15px;
+}
+
+button {
+    padding: 8px;
+    margin: 5px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+input {
+    padding: 6px;
+    margin: 5px;
+}
+
+#chatBox {
+    height: 120px;
+    overflow-y: scroll;
+    background: black;
+    padding: 5px;
+    text-align: left;
+}
+
+#inventory {
+    margin-top: 10px;
+}
+
+.hidden {
+    display: none;
+}
+</style>
+</head>
+<body>
+
+<div id="box">
+<h1>QuizWorld</h1>
+
+<div id="lobby">
+<input id="playerName" placeholder="Enter name">
+<button onclick="joinGame()">Join</button>
+</div>
+
+<div id="game" class="hidden">
+
+<h2 id="welcome"></h2>
+<p>Gold: <span id="gold">0</span></p>
+
+<h3>Question:</h3>
+<p id="question"></p>
+<div id="answers"></div>
+
+<hr>
+
+<h3>Inventory</h3>
+<div id="inventory"></div>
+
+<hr>
+
+<h3>Trade</h3>
+<input id="tradePlayer" placeholder="Player name">
+<input id="tradeItem" placeholder="Item name">
+<button onclick="trade()">Trade</button>
+
+<hr>
+
+<h3>Chat</h3>
+<div id="chatBox"></div>
+<input id="chatInput" placeholder="Type message">
+<button onclick="sendMessage()">Send</button>
+
+<hr>
+
+<h3>Leaderboard</h3>
+<div id="leaderboard"></div>
+
+</div>
+</div>
+
+<script>
+let players = {};
+let currentPlayer = "";
+let questions = [
+    {q:"2+2?", a:["3","4","5"], correct:1},
+    {q:"Capital of France?", a:["London","Paris","Rome"], correct:1}
+];
+
+function joinGame(){
+    const name = document.getElementById("playerName").value;
+    if(!name) return alert("Enter name");
+    
+    currentPlayer = name;
+    players[name] = {gold:0, inventory:["Starter Box"]};
+    
+    document.getElementById("lobby").classList.add("hidden");
+    document.getElementById("game").classList.remove("hidden");
+    document.getElementById("welcome").innerText = "Welcome " + name;
+    
+    loadQuestion();
+    updateUI();
+}
+
+function loadQuestion(){
+    const rand = Math.floor(Math.random()*questions.length);
+    const q = questions[rand];
+    document.getElementById("question").innerText = q.q;
+    const ansDiv = document.getElementById("answers");
+    ansDiv.innerHTML = "";
+    
+    q.a.forEach((ans,index)=>{
+        const btn = document.createElement("button");
+        btn.innerText = ans;
+        btn.onclick = ()=> {
+            if(index===q.correct){
+                players[currentPlayer].gold+=50;
+                players[currentPlayer].inventory.push("Mystery Box");
+                alert("Correct! +50 Gold + Mystery Box");
+            } else {
+                alert("Wrong!");
+            }
+            updateUI();
+            loadQuestion();
+        };
+        ansDiv.appendChild(btn);
+    });
+}
+
+function updateUI(){
+    document.getElementById("gold").innerText = players[currentPlayer].gold;
+    
+    const inv = document.getElementById("inventory");
+    inv.innerHTML="";
+    players[currentPlayer].inventory.forEach(item=>{
+        inv.innerHTML += "<p>"+item+"</p>";
+    });
+    
+    const lb = document.getElementById("leaderboard");
+    lb.innerHTML="";
+    for(let p in players){
+        lb.innerHTML += "<p>"+p+" - "+players[p].gold+" gold</p>";
+    }
+}
+
+function sendMessage(){
+    const msg = document.getElementById("chatInput").value;
+    if(!msg) return;
+    const chat = document.getElementById("chatBox");
+    chat.innerHTML += "<p><b>"+currentPlayer+":</b> "+msg+"</p>";
+    document.getElementById("chatInput").value="";
+    chat.scrollTop = chat.scrollHeight;
+}
+
+function trade(){
+    const other = document.getElementById("tradePlayer").value;
+    const item = document.getElementById("tradeItem").value;
+    
+    if(!players[other]){
+        alert("Player not found");
+        return;
+    }
+    
+    const index = players[currentPlayer].inventory.indexOf(item);
+    if(index===-1){
+        alert("You don't own that item");
+        return;
+    }
+    
+    players[currentPlayer].inventory.splice(index,1);
+    players[other].inventory.push(item);
+    
+    alert("Trade successful!");
+    updateUI();
+}
+</script>
+
+</body>
+</html>
